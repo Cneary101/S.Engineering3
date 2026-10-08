@@ -1,5 +1,5 @@
 import unittest
-from Delivery_Docket import Delivery_Docket
+#from Delivery_Docket import Delivery_Docket
 
 class DeliveryDocketTest(unittest.TestCase):
     def testPublication(self):
