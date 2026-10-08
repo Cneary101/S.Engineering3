@@ -2,8 +2,17 @@ import unittest
 
 
 class DeliveryPersonTest(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, False)  # add assertion here
+    def testArea(self):
+        pass
+    def testAvailability(self):
+        pass
+    def testCompletedDelivery(self):
+        pass
+    def testDate(self):
+        pass
+    def testDocket(self):
+        pass
+
 
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
 class Delivery_Person():
+    def __init__(self):
+        pass
     def verifyDeliveryArea(self):
         pass
     def verifyAvailabilityPublications(self):
@@ -8,6 +10,4 @@ class Delivery_Person():
     def verifyDeliveryDate(self):
         pass
     def verifyDocket(self):
-        pass
-    def DeliveryDriver(self):
         pass
