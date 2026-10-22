@@ -1,4 +1,4 @@
-class Delivery_Person():
+class Delivery_Person:
     def __init__(self, driver_id, name):
         self.driver_id = driver_id
         self.name = name
