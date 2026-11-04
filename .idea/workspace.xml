@@ -4,14 +4,20 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cabd7f4f-315f-4bf6-9351-ca02fc9a00d3" name="Changes" comment="Customer create + tests" />
+    <list default="true" id="cabd7f4f-315f-4bf6-9351-ca02fc9a00d3" name="Changes" comment="Customer create + tests">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Src/Create_Customer.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Src/Create_Customer_Test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Src/Terminal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="12" />
+    <option name="cachedIndexableFilesCount" value="1433" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -47,23 +53,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000000000000008" />
-      <entry key="MS500" value="1.0015175927497035" />
-      <entry key="S2" value="1.207821824499307" />
-      <entry key="S5" value="1.910365041977807" />
-      <entry key="S10" value="3.3102348709283884" />
-      <entry key="S30" value="7.090938995547836" />
-      <entry key="S60" value="10.22318522415742" />
-      <entry key="M2" value="14.36168705772193" />
-      <entry key="M5" value="20.01231785245119" />
-      <entry key="M10" value="23.046297100813096" />
-      <entry key="M15" value="24.24812805558601" />
-      <entry key="M30" value="25.562095549714915" />
-      <entry key="H1" value="26.264873094762184" />
-      <entry key="H2" value="26.655147707529526" />
-      <entry key="H4" value="27.247270445840172" />
-      <entry key="D1" value="31.372890998432993" />
-      <entry key="W1" value="33.547174427539495" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0000001759401511" />
+      <entry key="S5" value="1.0044829709522045" />
+      <entry key="S10" value="1.1335698534460645" />
+      <entry key="S30" value="2.4091547134136944" />
+      <entry key="S60" value="4.52083473932635" />
+      <entry key="M2" value="9.124292354341199" />
+      <entry key="M5" value="21.731788157836245" />
+      <entry key="M10" value="38.81253815990987" />
+      <entry key="M15" value="50.553362520320746" />
+      <entry key="M30" value="68.79102785643305" />
+      <entry key="H1" value="81.6359187935324" />
+      <entry key="H2" value="89.3399878282768" />
+      <entry key="H4" value="93.92884221650878" />
+      <entry key="D1" value="101.58716875226223" />
+      <entry key="W1" value="104.43079066803344" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -85,23 +91,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="8.006769111318542E-11" />
-      <entry key="MS500" value="0.010473770585540446" />
-      <entry key="S2" value="0.49374826609157424" />
-      <entry key="S5" value="1.4487642639202896" />
-      <entry key="S10" value="2.954009514656276" />
-      <entry key="S30" value="6.883420299292179" />
-      <entry key="S60" value="10.092264300710777" />
-      <entry key="M2" value="14.282152688767145" />
-      <entry key="M5" value="19.973660677146242" />
-      <entry key="M10" value="23.025196709181024" />
-      <entry key="M15" value="24.233597374363484" />
-      <entry key="M30" value="25.55457767283412" />
-      <entry key="H1" value="26.261046806125044" />
-      <entry key="H2" value="26.653216974498164" />
-      <entry key="H4" value="27.246299196340598" />
-      <entry key="D1" value="31.372726128229512" />
-      <entry key="W1" value="33.54715067585258" />
+      <entry key="MS100" value="0.8010698775896221" />
+      <entry key="MS500" value="0.9566081580918743" />
+      <entry key="S2" value="0.9889710871869231" />
+      <entry key="S5" value="0.9999919371761201" />
+      <entry key="S10" value="1.1303245744434294" />
+      <entry key="S30" value="2.402234485855149" />
+      <entry key="S60" value="4.501570797533449" />
+      <entry key="M2" value="9.087852338815344" />
+      <entry key="M5" value="21.682732137591923" />
+      <entry key="M10" value="38.764208472155424" />
+      <entry key="M15" value="50.51047742855192" />
+      <entry key="M30" value="68.76147988038873" />
+      <entry key="H1" value="81.61834330152428" />
+      <entry key="H2" value="89.33037101405763" />
+      <entry key="H4" value="93.92380663814383" />
+      <entry key="D1" value="101.58629405615956" />
+      <entry key="W1" value="104.4306646912916" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -123,9 +129,10 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "adam-customer",
+    "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.jshint": "true",
@@ -160,6 +167,7 @@
       <updated>1792079751146</updated>
       <workItem from="1792079752253" duration="132000" />
       <workItem from="1792080022689" duration="4316000" />
+      <workItem from="1793812679590" duration="2879000" />
     </task>
     <task id="LOCAL-00001" summary="Customer create + tests">
       <option name="closed" value="true" />
