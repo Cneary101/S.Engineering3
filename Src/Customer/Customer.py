@@ -22,10 +22,15 @@ class Customer: #create an empty customer for system with attributes all set to 
     def verify_phone_number( phone_number):
         return isinstance(phone_number, str) and  re.fullmatch(r"[0-9]{10}", phone_number) is not None
 
+    #Customer manager handles entire CRUD operations
     #create customer when validation is complete
     #every field is checked, if any field fails nothing will be created
     #if nothing fails new customer is created
-
+    #Read Customer and read all customers can be called depending on needs
+    #update finds relevant customer ID
+    #will only make changes if there is difference in any field
+    #any field can be changed but there must be one new entry
+    #delete customer can only be called if ID can be found
 
 class CustomerManager:
     def __init__(self):
