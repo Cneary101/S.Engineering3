@@ -1,7 +1,7 @@
 import pytest
-from src.Order import OrderManager
-from src.Customer.Customer import CustomerManager
-from src.Publications.Publications import Publication
+from Order import OrderManager
+from Customer.Customer import CustomerManager
+from Publications.Publications import Publication
 
 VALID = (1, 1, ["Monday"])
 OTHER = (1, 2, ["Friday"])
