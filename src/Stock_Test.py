@@ -1,6 +1,6 @@
 import pytest
-from src.Stock import StockManager
-from src.Publications.Publications import Publication
+from Stock import StockManager
+from Publications.Publications import Publication
 
 VALID = (1, 12)
 OTHER = (1, 5)
