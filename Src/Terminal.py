@@ -1,4 +1,5 @@
-from Login import Login
+from Login import LoginManager
+from Customer import Customer
 
 def main():
     print("Welcome to NewsAgent Delivery systems")
@@ -6,7 +7,7 @@ def main():
         username = input("Please enter your username: ")
         password = input("Please enter your password: ")
 
-        User = Login(username, password)
+        User = LoginManager(username, password)
 
         if not(User.verifyUsername()):
             print("Invalid Username")
