@@ -1,112 +1,148 @@
-# Records the bill for one customer and month.
-class Bill:
-    def __init__(self):
-        self.billId = None
-        self.customerId = None
-        self.month = None
-        self.total = None
+from datetime import date
+from decimal import Decimal
 
-    def getBillId(self):
-        return self.billId
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-    def getCustomerId(self):
-        return self.customerId
+from database import engine
+from models import Billing, Customer, Order, OrderItem, Publication
 
-    def getMonth(self):
-        return self.month
 
-    def getTotal(self):
-        return self.total
+def verify_id(value):
+    return type(value) is int and value > 0
 
-    # Check the customer/bill ID and the billing month.
-    def verify_id(self, value):
-        return type(value) is int and value > 0
 
-    def verify_month(self, month):
-        if not isinstance(month, str):
+def verify_month(month):
+    if not isinstance(month, str) or len(month) != 7:
+        return False
+    try:
+        return date.fromisoformat(month + "-01").strftime("%Y-%m") == month
+    except ValueError:
+        return False
+
+
+def verify_due_date(due_date):
+    if due_date is None or isinstance(due_date, date):
+        return True
+    if isinstance(due_date, str):
+        try:
+            date.fromisoformat(due_date)
+            return True
+        except ValueError:
+            pass
+    return False
+
+
+def _as_date(due_date):
+    return date.fromisoformat(due_date) if isinstance(due_date, str) else due_date
+
+
+def _calculate_total(session, customer_id, month):
+    year, month_number = map(int, month.split("-"))
+    start = date(year, month_number, 1)
+    end = date(year + 1, 1, 1) if month_number == 12 else date(year, month_number + 1, 1)
+
+    rows = session.execute(
+        select(Publication.price, OrderItem.quantity)
+        .join(OrderItem, OrderItem.publication_id)
+        .join(Order, OrderItem.order_id)
+        .where(Order.customer_id,
+               Order.delivery_date >= start,
+               Order.delivery_date < end,
+               Order.status.in_(("Delivered", "Completed")))
+    ).all()
+    return sum((Decimal(price) * quantity for price, quantity in rows), Decimal("0.00"))
+
+
+def calculate_total(customer_id, month):
+    if not verify_id(customer_id) or not verify_month(month):
+        return None
+    with Session(engine) as session:
+        return _calculate_total(session, customer_id, month)
+
+
+# Create
+# New bills start as drafts; their total comes from delivered SQL orders.
+def create_bill(bill_id, customer_id, month, due_date=None):
+    if not verify_id(bill_id) or not verify_id(customer_id):
+        return False
+    if not verify_month(month) or not verify_due_date(due_date):
+        return False
+
+    with Session(engine) as session:
+        if session.get(Billing, bill_id) is not None:
+            return False
+        if session.get(Customer, customer_id) is None:
+            return False
+        bill = Billing(id=bill_id, customer_id=customer_id, month=month,
+                       amount=_calculate_total(session, customer_id, month),
+                       status="Draft", due_date=_as_date(due_date))
+        session.add(bill)
+        try:
+            session.commit()
+            return bill_id
+        except IntegrityError:
+            session.rollback()
             return False
 
-        parts = month.split('-')
-        if len(parts) != 2:
+
+# Read
+def read_bill(bill_id):
+    with Session(engine) as session:
+        return session.get(Billing, bill_id)
+
+
+def read_all_bills():
+    with Session(engine) as session:
+        return list(session.scalars(select(Billing).order_by(Billing.id)))
+
+
+# Update
+# Only draft bills can be recalculated or changed.
+def update_bill(bill_id, customer_id, month):
+    if not verify_id(customer_id) or not verify_month(month):
+        return False
+    with Session(engine) as session:
+        bill = session.get(Billing, bill_id)
+        if bill is None or bill.status != "Draft":
             return False
-
-        year = parts[0]
-        number = parts[1]
-
-        if len(year) != 4 or len(number) != 2:
+        if session.get(Customer, customer_id) is None:
             return False
-        if not year.isdigit() or not number.isdigit():
-            return False
-
-        return 1 <= int(number) <= 12
-
-    # Charge only for deliveries completed in the selected month.
-    def calculate_total(self, deliveries, customerId, month):
-        total = 0
-
-        for delivery in deliveries:
-            if delivery['customer_id'] == customerId and delivery['delivered']:
-                if delivery['date'].startswith(month):
-                    total = total + delivery['price'] * delivery['quantity']
-
-        return round(total, 2)
-
-    # Validate inputs before calculating the final total.
-    def create_bill(self, billId, customerId, month, deliveries):
-        if not self.verify_id(billId) or not self.verify_id(customerId):
-            return False
-        if not self.verify_month(month) or not isinstance(deliveries, list):
-            return False
-
-        self.billId = billId
-        self.customerId = customerId
-        self.month = month
-        self.total = self.calculate_total(deliveries, customerId, month)
+        bill.customer_id = customer_id
+        bill.month = month
+        bill.amount = _calculate_total(session, customer_id, month)
+        session.commit()
         return True
 
 
-# Keeps bills together until the database/DAO is connected.
-class BillManager:
-    def __init__(self):
-        self.bills = {}
-
-    def create_bill(self, billId, customerId, month, deliveries):
-        if billId in self.bills:
-            return False
-
-        bill = Bill()
-        if not bill.create_bill(billId, customerId, month, deliveries):
-            return False
-
-        self.bills[billId] = bill
-        return billId
-
-    def read_bill(self, billId):
-        return self.bills.get(billId)
-
-    def read_all_bills(self):
-        return dict(self.bills)
-
-    def update_bill(self, billId, customerId, month, deliveries):
-        bill = self.read_bill(billId)
+def update_bill_status(bill_id, status, due_date=None):
+    if status not in ("Issued", "Paid") or not verify_due_date(due_date):
+        return False
+    with Session(engine) as session:
+        bill = session.get(Billing, bill_id)
         if bill is None:
             return False
-
-        # Recalculate if changes are made
-        if not bill.verify_id(customerId) or not bill.verify_month(month):
+        if (bill.status, status) not in (("Draft", "Issued"), ("Issued", "Paid")):
             return False
-        if not isinstance(deliveries, list):
-            return False
-
-        bill.customerId = customerId
-        bill.month = month
-        bill.total = bill.calculate_total(deliveries, customerId, month)
+        if due_date is not None:
+            bill.due_date = _as_date(due_date)
+        bill.status = status
+        session.commit()
         return True
 
-    def delete_bill(self, billId):
-        # Removes a draft bill
-        if billId not in self.bills:
-            return False
 
-        del self.bills[billId]
-        return True
+# Delete
+# Issued or paid bills cannot be deleted.
+def delete_bill(bill_id):
+    with Session(engine) as session:
+        bill = session.get(Billing, bill_id)
+        if bill is None or bill.status != "Draft":
+            return False
+        try:
+            session.delete(bill)
+            session.commit()
+            return True
+        except IntegrityError:
+            session.rollback()
+            return False
