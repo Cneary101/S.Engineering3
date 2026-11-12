@@ -17,7 +17,7 @@ class Customer(Base):
     address = Column(Text)
 #User
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
@@ -51,10 +51,9 @@ class Publication(Base):
     quantity = Column(Numeric, nullable=False)
 #Order
 class Order(Base):
-    __tablename__ = "order"
+    __tablename__ = "orders"
     id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
-    publication_id = Column(Integer, ForeignKey('publication.id'), nullable=False)
     delivery_date=Column(Date, nullable=False)
     status = Column(String(50), nullable=False)
     total_amount = Column(Numeric(10,2), nullable=False)
@@ -62,14 +61,14 @@ class Order(Base):
 class OrderItem(Base):
     __tablename__ = "order_item"
     id = Column(Integer, primary_key=True)
-    order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
+    order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
     publication_id = Column(Integer, ForeignKey('publication.id'), nullable=False)
     quantity = Column(Integer, nullable=False)
 #Billing
 class Billing(Base):
     __tablename__ = "billing"
     id = Column(Integer, primary_key=True)
-    customer_id = Column(Integer, ForeignKey('customer.id'))
+    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
     amount=Column(Numeric(10,2), nullable=False)
     status = Column(String(50), nullable=False)
     due_date=Column(Date, nullable=False)
