@@ -26,7 +26,7 @@ class Customer(Base):
 
 # User
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, index=True, nullable=False)

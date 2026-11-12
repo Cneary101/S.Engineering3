@@ -1,137 +1,111 @@
-# Holds details for one publication.
-class Publication:
-    def __init__(self):
-        # Start with an empty publication.
-        self.publicationId = None
-        self.name = None
-        self.publicationType = None
-        self.price = None
-        self.quantity = None
-        self.frequency = None
-        self.active = None
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-    # Access and change individual attributes.
-    def getPublicationId(self):
-        return self.publicationId
-
-    def getName(self):
-        return self.name
-
-    def setName(self, name):
-        self.name = name
-
-    def getPublicationType(self):
-        return self.publicationType
-
-    def setPublicationType(self, publicationType):
-        self.publicationType = publicationType
-
-    def getPrice(self):
-        return self.price
-
-    def setPrice(self, price):
-        self.price = price
-
-    def getQuantity(self):
-        return self.quantity
-
-    def setQuantity(self, quantity):
-        self.quantity = quantity
-
-    def getFrequency(self):
-        return self.frequency
-
-    def setFrequency(self, frequency):
-        self.frequency = frequency
-
-    def getActive(self):
-        return self.active
-
-    def setActive(self, active):
-        self.active = active
-
-    # Check the required values before creating a publication.
-    def verify_text(self, value):
-        return isinstance(value, str) and value.strip() != ""
-
-    def verify_price(self, price):
-        return type(price) in (int, float) and price >= 0
-
-    def verify_quantity(self, quantity):
-        return type(quantity) is int and quantity >= 0
-
-    # Five or fewer is considered low stock.
-    def verifyLowStock(self):
-        return self.quantity is not None and self.quantity <= 5
-
-    # Only save the details when all checks pass.
-    def create_publication(self, publicationId, name, publicationType,
-                           price, quantity, frequency):
-        if type(publicationId) is not int or publicationId <= 0:
-            return False
-        if not all(self.verify_text(x) for x in (name, publicationType, frequency)):
-            return False
-        if not self.verify_price(price) or not self.verify_quantity(quantity):
-            return False
-
-        self.publicationId = publicationId
-        self.name = name
-        self.publicationType = publicationType
-        self.price = price
-        self.quantity = quantity
-        self.frequency = frequency
-        self.active = True
-        return True
+from database import engine
+from models import Publication
 
 
-# Handles CRUD for publications.
-class PublicationManager:
-    def __init__(self):
-        self.publications = {}
+# ---------------------------------------------------------------------------
+# Validation helpers
+# ---------------------------------------------------------------------------
+def verify_text(value):
+    return isinstance(value, str) and value.strip() != ""
 
-    def create_publication(self, publicationId, name, publicationType,
-                           price, quantity, frequency):
-        if publicationId in self.publications:
-            return False
 
-        publication = Publication()
-        if not publication.create_publication(publicationId, name, publicationType,
-                                              price, quantity, frequency):
-            return False
+def verify_price(price):
+    # Accept int or float, must be >= 0
+    return type(price) in (int, float) and price >= 0
 
-        self.publications[publicationId] = publication
-        return publicationId
 
-    def read_publication(self, publicationId):
-        return self.publications.get(publicationId)
+def verify_quantity(quantity):
+    # Must be a whole number >= 0
+    return type(quantity) is int and quantity >= 0
 
-    def read_all_publications(self):
-        return dict(self.publications)
 
-    def update_publication(self, publicationId, name, publicationType,
-                           price, quantity, frequency):
-        publication = self.read_publication(publicationId)
+# ---------------------------------------------------------------------------
+# Create
+# ---------------------------------------------------------------------------
+def create_publication(publication_id, name, publication_type, price, quantity):
+    # ---- validation ----
+    if not isinstance(publication_id, int) or publication_id <= 0:
+        return False
+    if not verify_text(name) or not verify_text(publication_type):
+        return False
+    if not verify_price(price) or not verify_quantity(quantity):
+        return False
+
+    # ---- persist ----
+    with Session(engine) as session:
+        if session.get(Publication, publication_id) is not None:
+            return False  # duplicate ID
+
+        publication = Publication(
+            id=publication_id,
+            name=name.strip(),
+            publication_type=publication_type.strip(),
+            price=price,
+            quantity=quantity,
+        )
+        session.add(publication)
+        session.commit()
+        return publication_id
+
+
+# ---------------------------------------------------------------------------
+# Read
+# ---------------------------------------------------------------------------
+def read_publication(publication_id):
+    with Session(engine) as session:
+        return session.get(Publication, publication_id)
+
+
+def read_all_publications():
+    with Session(engine) as session:
+        return list(session.scalars(select(Publication).order_by(Publication.id)))
+
+
+def verify_low_stock(publication):
+    """Five or fewer is considered low stock. Preserved from teammate's class."""
+    return publication is not None and publication.quantity <= 5
+
+
+# ---------------------------------------------------------------------------
+# Update
+# ---------------------------------------------------------------------------
+def update_publication(publication_id, name, publication_type, price, quantity):
+    # ---- validation ----
+    if not verify_text(name) or not verify_text(publication_type):
+        return False
+    if not verify_price(price) or not verify_quantity(quantity):
+        return False
+
+    with Session(engine) as session:
+        publication = session.get(Publication, publication_id)
         if publication is None:
             return False
 
-        # Check every replacement value before changing anything.
-        if not all(publication.verify_text(x) for x in (name, publicationType, frequency)):
-            return False
-        if not publication.verify_price(price) or not publication.verify_quantity(quantity):
-            return False
-
-        publication.setName(name)
-        publication.setPublicationType(publicationType)
-        publication.setPrice(price)
-        publication.setQuantity(quantity)
-        publication.setFrequency(frequency)
+        publication.name = name.strip()
+        publication.publication_type = publication_type.strip()
+        publication.price = price
+        publication.quantity = quantity
+        session.commit()
         return True
 
-    def delete_publication(self, publicationId):
-        # Keep the record for old orders
-        publication = self.read_publication(publicationId)
-        if publication is None or publication.getActive() is False:
-            return False
 
-        publication.setActive(False)
-        return True
+# ---------------------------------------------------------------------------
+# Delete
+# ---------------------------------------------------------------------------
+def delete_publication(publication_id):
+    with Session(engine) as session:
+        publication = session.get(Publication, publication_id)
+        if publication is None:
+            return False
+        try:
+            session.delete(publication)
+            session.commit()
+            return True
+        except IntegrityError:
+            # publication is referenced by OrderItem → cannot delete
+            session.rollback()
+            return False

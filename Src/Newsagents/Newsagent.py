@@ -1,78 +1,64 @@
-# Holds the name and active status of a newsagent.
-class Newsagent:
-    def __init__(self):
-        self.newsagentId = None
-        self.name = None
-        self.active = None
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-    # Basic getters and setters.
-    def getNewsagentId(self):
-        return self.newsagentId
+from database import engine
+from models import Newsagent
 
-    def getName(self):
-        return self.name
 
-    def setName(self, name):
-        self.name = name
+def verify_name(name):
+    return isinstance(name, str) and name.strip() != ""
 
-    def getActive(self):
-        return self.active
 
-    def setActive(self, active):
-        self.active = active
+# Create
+def create_newsagent(newsagent_id, name):
+    if type(newsagent_id) is not int or newsagent_id <= 0:
+        return False
+    if not verify_name(name):
+        return False
 
-    # Reject blank or spaces-only names.
-    def verify_name(self, name):
-        return isinstance(name, str) and name.strip() != ""
-
-    # Create a record only when the ID and name are valid.
-    def create_newsagent(self, newsagentId, name):
-        if type(newsagentId) is not int or newsagentId <= 0:
+    with Session(engine) as session:
+        if session.get(Newsagent, newsagent_id) is not None:
             return False
-        if not self.verify_name(name):
+        session.add(Newsagent(id=newsagent_id, name=name.strip(), is_active=True))
+        try:
+            session.commit()
+            return newsagent_id
+        except IntegrityError:
+            session.rollback()
             return False
 
-        self.newsagentId = newsagentId
-        self.name = name
-        self.active = True
+
+# Read
+def read_newsagent(newsagent_id):
+    with Session(engine) as session:
+        return session.get(Newsagent, newsagent_id)
+
+
+def read_all_newsagents():
+    with Session(engine) as session:
+        return list(session.scalars(select(Newsagent).order_by(Newsagent.id)))
+
+
+# Update
+def update_newsagent(newsagent_id, name):
+    if not verify_name(name):
+        return False
+    with Session(engine) as session:
+        newsagent = session.get(Newsagent, newsagent_id)
+        if newsagent is None:
+            return False
+        newsagent.name = name.strip()
+        session.commit()
         return True
 
 
-# Manages multiple newsagents using the CRUD pattern
-class NewsagentManager:
-    def __init__(self):
-        self.newsagents = {}
-
-    def create_newsagent(self, newsagentId, name):
-        if newsagentId in self.newsagents:
+# Delete: deactivate to keep historical records
+def delete_newsagent(newsagent_id):
+    with Session(engine) as session:
+        newsagent = session.get(Newsagent, newsagent_id)
+        if newsagent is None or not newsagent.is_active:
             return False
-
-        newsagent = Newsagent()
-        if not newsagent.create_newsagent(newsagentId, name):
-            return False
-
-        self.newsagents[newsagentId] = newsagent
-        return newsagentId
-
-    def read_newsagent(self, newsagentId):
-        return self.newsagents.get(newsagentId)
-
-    def read_all_newsagents(self):
-        return dict(self.newsagents)
-
-    def update_newsagent(self, newsagentId, name):
-        newsagent = self.read_newsagent(newsagentId)
-        if newsagent is None or not newsagent.verify_name(name):
-            return False
-
-        newsagent.setName(name)
-        return True
-
-    def delete_newsagent(self, newsagentId):
-        # An inactive record is kept
-        newsagent = self.read_newsagent(newsagentId)
-        if newsagent is None or newsagent.getActive() is False:
-            return False
-
-        newsagent.setActive(False)
+        newsagent.is_active = False
+        session.commit()
         return True
