@@ -1,82 +1,97 @@
 import re
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-class Customer: #create an empty customer for system with attributes all set to None to avoid AttributeError
-    def __init__(self, first_name, last_name, address, phone_number):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.address = address
-        self.phone_number = phone_number
-
+from database import engine
+from models import Customer
 
     #Verify methods to check value passes in correctly
-    @staticmethod
-    def verify_first_name( first_name):
-        return isinstance(first_name, str) and len(first_name) > 0
-    @staticmethod
-    def verify_last_name( last_name):
-        return isinstance(last_name, str) and len(last_name) > 0
-    @staticmethod
-    def verify_address( address):
-        return isinstance(address, str) and len(address) > 0
-    @staticmethod
-    def verify_phone_number( phone_number):
-        return isinstance(phone_number, str) and  re.fullmatch(r"[0-9]{10}", phone_number) is not None
+def verify_text(value):
+    return isinstance(value, str) and value.strip() != ""
 
-    #Customer manager handles entire CRUD operations
-    #create customer when validation is complete
-    #every field is checked, if any field fails nothing will be created
-    #if nothing fails new customer is created
-    #Read Customer and read all customers can be called depending on needs
-    #update finds relevant customer ID
-    #will only make changes if there is difference in any field
-    #any field can be changed but there must be one new entry
-    #delete customer can only be called if ID can be found
 
-class CustomerManager:
-    def __init__(self):
-        self.customers = {}
-        self.next_id = 1
+def verify_phone_number(phone_number):
+    """Phone is REQUIRED: must be a string of exactly 10 digits."""
+    if not isinstance(phone_number, str):
+        return False
+    return re.fullmatch(r"[0-9]{10}", phone_number) is not None
+# ---------------------------------------------------------------------------
+# Create
+# ---------------------------------------------------------------------------
+def create_customer(customer_id, name, last_name, phone, address):
+    # ---- validation ----
+    if not isinstance(customer_id, int) or customer_id <= 0:
+        return False
+    if not verify_text(name) or not verify_text(last_name):
+        return False
+    if not verify_phone_number(phone):
+        return False
 
-    def create_customer(self, first_name, last_name, address, phone_number):
-        if not (Customer.verify_first_name(first_name)
-            and Customer.verify_last_name(last_name)
-            and Customer.verify_address(address)
-            and Customer.verify_phone_number(phone_number)):
-            return False
-        else:
-            customer = Customer(first_name, last_name, address, phone_number)
-            customer_id = self.next_id
-            self.customers[customer_id] = customer
-            self.next_id += 1
-            return customer_id
+    # ---- persist ----
+    with Session(engine) as session:
+        if session.get(Customer, customer_id) is not None:
+            return False  # duplicate ID
 
-    def read_customer(self, customer_id):
-        if customer_id in self.customers:
-            return self.customers[customer_id]
+        customer = Customer(
+            id=customer_id,
+            name=name.strip(),
+            last_name=last_name.strip(),
+            phone=phone.strip(),                       # required — no None branch
+            address=address.strip() if address else None,   # address still optional
+        )
+        session.add(customer)
+        session.commit()
+        return customer_id
 
-    def read_all_customers(self):
-        return dict(self.customers)
+# ---------------------------------------------------------------------------
+# Read
+# ---------------------------------------------------------------------------
+def read_customer(customer_id):
+    with Session(engine) as session:
+        return session.get(Customer, customer_id)
 
-    def update_customer(self, customer_id, first_name, last_name, address, phone_number):
-        customer = self.read_customer(customer_id)
+
+def read_all_customers():
+    with Session(engine) as session:
+        return list(session.scalars(select(Customer).order_by(Customer.id)))
+
+
+# ---------------------------------------------------------------------------
+# Update
+# ---------------------------------------------------------------------------
+def update_customer(customer_id, name, last_name, phone, address):
+    # ---- validation ----
+    if not verify_text(name) or not verify_text(last_name):
+        return False
+    if not verify_phone_number(phone):
+        return False
+
+    with Session(engine) as session:
+        customer = session.get(Customer, customer_id)
         if customer is None:
             return False
 
-        if not(Customer.verify_first_name(first_name)
-            and Customer.verify_last_name(last_name)
-            and Customer.verify_address(address)
-            and Customer.verify_phone_number(phone_number)):
-            return False
-
-        customer.first_name = first_name
-        customer.last_name = last_name
-        customer.address = address
-        customer.phone_number = phone_number
+        customer.name = name.strip()
+        customer.last_name = last_name.strip()
+        customer.phone = phone.strip()                     # required
+        customer.address = address.strip() if address else None
+        session.commit()
         return True
 
-    def delete_customer(self, customer_id):
-        if customer_id in self.customers:
-            del self.customers[customer_id]
-            return True
-        else:
+# ---------------------------------------------------------------------------
+# Delete
+# ---------------------------------------------------------------------------
+def delete_customer(customer_id):
+    with Session(engine) as session:
+        customer = session.get(Customer, customer_id)
+        if customer is None:
             return False
+        try:
+            session.delete(customer)
+            session.commit()
+            return True
+        except IntegrityError:
+            session.rollback()
+            return False
+
