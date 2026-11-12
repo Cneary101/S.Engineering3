@@ -1,5 +1,5 @@
 from Login import LoginManager
-from Menu import customer_menu
+from Menu import customer_menu, publication_menu
 
 def main():
     print("Welcome to NewsAgent Delivery systems")
@@ -20,7 +20,7 @@ def main():
     while True:
         MainMenu = input("Please enter your choice:\n"
                          "1: Customer\n"
-                         "2: Delivery Person\n"
+                         "2: Publication\n"
                          "3: Delivery Docket\n"
                          "4: Orders\n"
                          "5: Exit\n")
@@ -29,34 +29,7 @@ def main():
             customer_menu()
 
         elif MainMenu == "2":
-            print("Delivery person")
-            while True:
-                try:
-                    choiceD = input("Please enter your choice:\n"
-                                    "1: Create\n"
-                                    "2: Read\n"
-                                    "3: Update\n"
-                                    "4: Delete\n"
-                                    "5: Exit\n")
-                    if choiceD == "1":
-                        print("Create new Delivery person")
-                        pass
-                    elif choiceD == "2":
-                        print("Read existing Delivery person")
-                        pass
-                    elif choiceD == "3":
-                        print("Update existing Delivery person")
-                        pass
-                    elif choiceD == "4":
-                        print("Delete Delivery person")
-                        pass
-                    elif choiceD == "5":
-                        print("Exiting Delivery person menu")
-                        break
-                    else:
-                        raise ValueError("Invalid Choice")
-                except ValueError as e:
-                    print(e)
+           publication_menu()
 
         elif MainMenu == "3":
             print("Delivery Docket")
