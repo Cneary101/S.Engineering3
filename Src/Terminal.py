@@ -1,4 +1,5 @@
 from Login import Login
+from Menu import customer_menu
 
 def main():
     print("Welcome to NewsAgent Delivery systems")
@@ -25,34 +26,7 @@ def main():
                          "5: Exit\n")
 
         if MainMenu == "1":
-            print("Customer")
-            while True:
-                try:
-                    choiceC = input("Please enter your choice:\n"
-                                    "1: Create\n"
-                                    "2: Read\n"
-                                    "3: Update\n"
-                                    "4: Delete\n"
-                                    "5: Exit\n")
-                    if choiceC == "1":
-                        print("Create new Customer")
-                        pass
-                    elif choiceC == "2":
-                        print("Read existing Customer")
-                        pass
-                    elif choiceC == "3":
-                        print("Update existing Customer")
-                        pass
-                    elif choiceC == "4":
-                        print("Delete Customer")
-                        pass
-                    elif choiceC == "5":
-                        print("Exiting Customer menu")
-                        break
-                    else:
-                        raise ValueError("Invalid Choice")
-                except ValueError as e:
-                    print(e)
+            customer_menu()
 
         elif MainMenu == "2":
             print("Delivery person")

@@ -117,7 +117,6 @@ class Order(Base):
         back_populates="order",
         cascade="all, delete-orphan",   # deleting an order deletes its items
     )
-    billings = relationship("Billing", back_populates="order")
 
     def __repr__(self):
         return (
