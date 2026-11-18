@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from database import engine
 from Login import LoginManager
-from Menu import customer_menu, publication_menu
+from Menu import customer_menu, publication_menu, delivery_person_menu
 
 
 def login_flow(session):
@@ -49,9 +49,7 @@ def main():
                 publication_menu()
 
             elif choice == "3":
-                # TODO: uncomment when Menu/delivery_person_menu.py exists
-                # delivery_person_menu()
-                print("Delivery Persons — not yet implemented.")
+                delivery_person_menu()
 
             elif choice == "4":
                 # TODO: uncomment when Menu/docket_menu.py exists
