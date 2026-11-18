@@ -1,11 +1,3 @@
-# menus/customer_menu.py
-"""Terminal menu for Customer CRUD. Phone is required (10 digits).
-
-Wraps crud.customer.* with a numbered menu.
-No login dependency — safe to test standalone:
-
-    python -c "from menus.customer_menu import customer_menu; customer_menu()"
-"""
 
 from Customer.Customer import (
     create_customer,
