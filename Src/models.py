@@ -163,3 +163,15 @@ class Billing(Base):
             f"<Billing id={self.id} customer_id={self.customer_id} "
             f"amount={self.amount} status={self.status}>"
         )
+
+
+# Newsagent
+class Newsagent(Base):
+    __tablename__ = "newsagent"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+
+    def __repr__(self):
+        return f"<Newsagent id={self.id} name={self.name}>"
