@@ -1,4 +1,4 @@
-from Newsagent import (
+from Newsagents.Newsagent import (
     create_newsagent, read_newsagent, read_all_newsagents,
     update_newsagent, delete_newsagent,
 )
