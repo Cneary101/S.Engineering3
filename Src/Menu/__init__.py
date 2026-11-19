@@ -4,5 +4,6 @@ from .delivery_person_menu import delivery_person_menu
 from .route_menu import docket_menu
 from .order_menu import order_menu
 from .billing_menu import billing_menu
+from .newsagent_menu import newsagent_menu
 
 __all__ = ["customer_menu", "publication_menu","delivery_person_menu", "docket_menu","order_menu","billing_menu"]
