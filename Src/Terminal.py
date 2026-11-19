@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from database import engine
 from Login import LoginManager
-from Menu import customer_menu, publication_menu, delivery_person_menu, docket_menu, order_menu, billing_menu
+from Menu import customer_menu, publication_menu, delivery_person_menu, docket_menu, order_menu, billing_menu, newsagent_menu
 
 
 def login_flow(session):
@@ -30,18 +30,18 @@ def main():
 
         while True:
             print()
-            choice = input(
-                "Main Menu\n"
-                "1: Customers\n"
-                "2: Publications\n"
-                "3: Delivery Persons\n"
-                "4: Delivery Dockets\n"
-                "5: Orders\n"
-                "6: Billing\n"
-                "7: Exit\n"
-                "Choice: "
-            ).strip()
-
+                choice = input(
+                    "Main Menu\n"
+                    "1: Customers\n"
+                    "2: Publications\n"
+                    "3: Delivery Persons\n"
+                    "4: Delivery Dockets\n"
+                    "5: Orders\n"
+                    "6: Billing\n"
+                    "7: Newsagents\n"
+                    "8: Exit\n"
+                    "Choice: "
+                ).strip()
             if choice == "1":
                 customer_menu()
 
@@ -61,6 +61,9 @@ def main():
                 billing_menu()
 
             elif choice == "7":
+                newsagent_menu()
+
+            elif choice == "8":
                 print(f"Goodbye, {user.username}!")
                 break
 
