@@ -1,14 +1,25 @@
 import re
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
 
 from database import engine
 from models import Customer
 
     #Verify methods to check value passes in correctly
-def verify_text(value):
-    return isinstance(value, str) and value.strip() != ""
+def verify_id(value):
+    return type(value) is int and value > 0
+
+def verify_address(address):
+    return address is None or isinstance(address, str)
+
+def verify_name(name):
+    # Letters, spaces, apostrophes and hyphens only, e.g. "Mary O'Brien", "Mary-Kate".
+    # isalpha() also accepts accented letters such as "Seán".
+    if not isinstance(name, str) or name.strip() == "":
+        return False
+    return all(char.isalpha() or char in " '-" for char in name.strip())
 
 
 def verify_phone_number(phone_number):
@@ -16,6 +27,17 @@ def verify_phone_number(phone_number):
     if not isinstance(phone_number, str):
         return False
     return re.fullmatch(r"[0-9]{10}", phone_number) is not None
+
+
+def _save(session):
+    try:
+        session.commit()
+        return True
+    except SQLAlchemyError:
+        session.rollback()
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Create
 # ---------------------------------------------------------------------------
@@ -23,7 +45,7 @@ def create_customer(customer_id, name, last_name, phone, address):
     # ---- validation ----
     if not isinstance(customer_id, int) or customer_id <= 0:
         return False
-    if not verify_text(name) or not verify_text(last_name):
+    if not verify_name(name) or not verify_name(last_name):
         return False
     if not verify_phone_number(phone):
         return False
@@ -41,13 +63,16 @@ def create_customer(customer_id, name, last_name, phone, address):
             address=address.strip() if address else None,   # address still optional
         )
         session.add(customer)
-        session.commit()
-        return customer_id
+        if not _save(session):
+            return False
+        return customer.id
 
 # ---------------------------------------------------------------------------
 # Read
 # ---------------------------------------------------------------------------
 def read_customer(customer_id):
+    if not verify_id(customer_id):
+        return None
     with Session(engine) as session:
         return session.get(Customer, customer_id)
 
@@ -62,7 +87,7 @@ def read_all_customers():
 # ---------------------------------------------------------------------------
 def update_customer(customer_id, name, last_name, phone, address):
     # ---- validation ----
-    if not verify_text(name) or not verify_text(last_name):
+    if not verify_name(name) or not verify_name(last_name):
         return False
     if not verify_phone_number(phone):
         return False
@@ -76,8 +101,8 @@ def update_customer(customer_id, name, last_name, phone, address):
         customer.last_name = last_name.strip()
         customer.phone = phone.strip()                     # required
         customer.address = address.strip() if address else None
-        session.commit()
-        return True
+        session.add(customer)
+        return _save(session)
 
 # ---------------------------------------------------------------------------
 # Delete
@@ -91,7 +116,7 @@ def delete_customer(customer_id):
             session.delete(customer)
             session.commit()
             return True
-        except IntegrityError:
+        except SQLAlchemyError:
             session.rollback()
             return False
 
