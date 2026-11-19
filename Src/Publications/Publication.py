@@ -28,7 +28,7 @@ def verify_quantity(quantity):
 # ---------------------------------------------------------------------------
 def create_publication(publication_id, name, publication_type, price, quantity):
     # ---- validation ----
-    if not isinstance(publication_id, int) or publication_id <= 0:
+    if type(publication_id) is not int or publication_id <= 0:
         return False
     if not verify_text(name) or not verify_text(publication_type):
         return False
