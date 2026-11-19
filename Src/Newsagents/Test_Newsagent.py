@@ -1,69 +1,85 @@
 import pytest
-from Newsagent_Basic import Newsagent, NewsagentManager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+import Newsagents.Newsagent as newsagent
+from models import Base, Newsagent as NewsagentRow
 
 
-# Start each test with a fresh Newsagent object.
 @pytest.fixture
-def newsagent():
-    return Newsagent()
+def database(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'newsagent_test.db'}")
+    Base.metadata.create_all(engine)
+    monkeypatch.setattr(newsagent, "engine", engine)
+    yield engine
+    engine.dispose()
 
 
-def test_create_newsagent(newsagent):
-    assert newsagent.create_newsagent(1, 'Main Street Newsagents') is True
-    assert newsagent.getName() == 'Main Street Newsagents'
-    assert newsagent.getActive() is True
+# Validation
+@pytest.mark.parametrize("name", ["Main Street Newsagents", "N", "  Athlone  "])
+def test_valid_name(name):
+    assert newsagent.verify_name(name) is True
 
 
-# Check invalid IDs and blank names.
-@pytest.mark.parametrize('newsagent_id, name', [
-    (0, 'Main Street Newsagents'),
-    (1, ''),
-    (1, '   '),
+@pytest.mark.parametrize("name", ["", "   ", None, 123])
+def test_invalid_name(name):
+    assert newsagent.verify_name(name) is False
+
+
+# Create and Read
+@pytest.mark.parametrize("newsagent_id,name", [
+    (0, "Newsagent"), (-1, "Newsagent"), (True, "Newsagent"),
+    ("1", "Newsagent"), (1, ""), (1, "   "), (1, None)
 ])
-def test_invalid_newsagent(newsagent, newsagent_id, name):
+def test_invalid_creation(database, newsagent_id, name):
     assert newsagent.create_newsagent(newsagent_id, name) is False
-    assert newsagent.getNewsagentId() is None
+    assert newsagent.read_all_newsagents() == []
 
 
-def test_setters(newsagent):
-    newsagent.create_newsagent(1, 'Main Street Newsagents')
-    newsagent.setName('Athlone Newsagents')
-    newsagent.setActive(False)
-    assert newsagent.getName() == 'Athlone Newsagents'
-    assert newsagent.getActive() is False
+def test_create_read_and_list(database):
+    assert newsagent.create_newsagent(1, "  Main Street  ") == 1
+    assert newsagent.create_newsagent(2, "Athlone") == 2
+    row = newsagent.read_newsagent(1)
+    assert (row.id, row.name, row.is_active) == (1, "Main Street", True)
+    assert [row.id for row in newsagent.read_all_newsagents()] == [1, 2]
+    assert newsagent.read_newsagent(99) is None
 
 
-# The manager follows the CRUD pattern 
-@pytest.fixture
-def manager():
-    return NewsagentManager()
+def test_duplicate_id_rejected(database):
+    assert newsagent.create_newsagent(1, "Original") == 1
+    assert newsagent.create_newsagent(1, "Duplicate") is False
+    assert newsagent.read_newsagent(1).name == "Original"
+    assert len(newsagent.read_all_newsagents()) == 1
 
 
-def test_manager_create_and_read(manager):
-    assert manager.create_newsagent(1, 'Main Street Newsagents') == 1
-    assert manager.read_newsagent(1).getName() == 'Main Street Newsagents'
-    assert len(manager.read_all_newsagents()) == 1
+# Update
+@pytest.mark.parametrize("name", ["", "   ", None, 123])
+def test_invalid_update_keeps_name(database, name):
+    newsagent.create_newsagent(1, "Original")
+    assert newsagent.update_newsagent(1, name) is False
+    assert newsagent.read_newsagent(1).name == "Original"
 
 
-def test_manager_invalid_and_duplicate(manager):
-    assert manager.create_newsagent(1, 'Main Street Newsagents') == 1
-    assert manager.create_newsagent(1, 'Duplicate') is False
-    assert manager.create_newsagent(2, '   ') is False
-    assert manager.read_newsagent(2) is None
-    assert manager.read_newsagent(99) is None
+def test_update_and_missing_id(database):
+    newsagent.create_newsagent(1, "Original")
+    assert newsagent.update_newsagent(1, " Updated ") is True
+    assert newsagent.read_newsagent(1).name == "Updated"
+    assert newsagent.update_newsagent(99, "Other") is False
 
 
-def test_manager_update(manager):
-    manager.create_newsagent(1, 'Main Street Newsagents')
-    assert manager.update_newsagent(1, 'Athlone Newsagents') is True
-    assert manager.update_newsagent(1, '   ') is False
-    assert manager.update_newsagent(99, 'Different') is False
-    assert manager.read_newsagent(1).getName() == 'Athlone Newsagents'
+# Deactivate, but keep the record
+
+def test_deactivate_and_repeat_delete(database):
+    newsagent.create_newsagent(1, "Main Street")
+    assert newsagent.delete_newsagent(1) is True
+    row = newsagent.read_newsagent(1)
+    assert row is not None and row.is_active is False
+    assert newsagent.delete_newsagent(1) is False
+    assert newsagent.delete_newsagent(99) is False
+    assert len(newsagent.read_all_newsagents()) == 1
 
 
-def test_manager_delete_keeps_inactive_record(manager):
-    manager.create_newsagent(1, 'Main Street Newsagents')
-    assert manager.delete_newsagent(1) is True
-    assert manager.read_newsagent(1).getActive() is False
-    assert manager.delete_newsagent(1) is False
-    assert manager.delete_newsagent(99) is False
+def test_record_is_saved_in_sql(database):
+    newsagent.create_newsagent(1, "Main Street")
+    with Session(database) as session:
+        assert session.get(NewsagentRow, 1).name == "Main Street"
